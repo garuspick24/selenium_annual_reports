@@ -6,46 +6,36 @@ from selenium.webdriver.support import expected_conditions as EC
 import requests
 import time
 
-
-topic_search = "JPMorgan Chase"
-year_search = "2023"
-topic_search = topic_search.replace(" ", "+")
 options = webdriver.ChromeOptions()
 options.add_experimental_option('detach', True)
 browser = webdriver.Chrome(options=options)
 
-for i in range(1):
-    elements = browser.get(
-        'https://www.google.com/search?q=' + topic_search + '+annual+report+' + year_search + '+filetype:pdf' + '&start=' + str(
-            i))
 
-list = [
-    "JPMorgan Chase",
-    "Saudi Arabian Oil Company (Saudi Aramco)",
-    "ICBC",
-    "China Construction Bank",
-    "Agricultural Bank of China"
-]
-# Очікування появи посилання
-first_result_link = WebDriverWait(browser, 10).until(
-    EC.presence_of_element_located((By.CSS_SELECTOR, 'div.g:nth-child(1) a'))
-)
+def download_pdf(company_name: str, rank: int, year: int = 2023):
+    name_for_url = company_name.replace(" ", "+")
+    elements = browser.get(f"https://www.google.com/search?q={name_for_url}+annual+report+{year}+filetype:pdf+&start=0")
 
-# Клік на посилання
-first_result_link.click()
+    # Очікування появи посилання
+    first_result_link = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.g:nth-child(1) a'))
+    )
 
-# Перехід на нову вкладку
-time.sleep(8)
-browser.switch_to.window(browser.window_handles[-1])
+    # Клік на посилання
+    first_result_link.click()
 
-pdf_link = browser.current_url  # Отримати поточну URL-адресу вікна з PDF-файлом
+    # Перехід на нову вкладку
+    time.sleep(10)
+    browser.switch_to.window(browser.window_handles[-1])
 
-print(pdf_link)
+    pdf_link = browser.current_url  # Отримати поточну URL-адресу вікна з PDF-файлом
 
-response = requests.get(pdf_link)
-if response.status_code == 200:
-    with open('annual_report_2023.pdf', 'wb') as pdf_file:
-        pdf_file.write(response.content)
-    print("PDF-файл завантажено успішно.")
-else:
-    print("Помилка завантаження PDF-файлу.")
+    response = requests.get(pdf_link)
+    if response.status_code == 200:
+        with open(f'reports/{rank}. {company_name}_{year}.pdf', 'wb') as pdf_file:
+            pdf_file.write(response.content)
+        print("PDF-файл завантажено успішно.")
+    else:
+        print("Помилка завантаження PDF-файлу.")
+
+
+download_pdf("JPMorgan Chase", 1, 2023)
